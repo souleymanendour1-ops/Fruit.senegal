@@ -23,7 +23,25 @@ Application mobile (PWA) qui permet de **commander des produits depuis Alibaba, 
 - 🛍️ Gestion du catalogue (ajout / modification / suppression de produits).
 - ⚙️ Réglages : numéros Wave / Orange Money, devise, frais de service, etc.
 
-## 🚀 Démarrage
+## ⚡ Installation rapide (1 commande)
+
+Sur Android (Termux) ou Linux, le script `install.sh` fait tout automatiquement
+(installe git/Node si besoin, clone/met à jour le code, installe les dépendances,
+demande le mot de passe administrateur, puis démarre l'application) :
+
+```bash
+pkg install -y git            # Termux uniquement, une seule fois
+git clone https://github.com/souleymanendour1-ops/fruit.senegal.git
+cd fruit.senegal && git checkout claude/mobile-shopping-payment-app-gew0f2
+bash install.sh
+```
+
+Les fois suivantes, il suffit de relancer `bash install.sh` (le mot de passe est mémorisé).
+
+> ℹ️ **Important** : lancez toujours les commandes **dans le dossier `fruit.senegal`**
+> (et non dans `~/downloads`). Vérifiez avec `ls package.json` : le fichier doit s'afficher.
+
+## 🚀 Démarrage manuel
 
 ```bash
 npm install
