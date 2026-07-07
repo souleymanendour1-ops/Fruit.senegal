@@ -1,0 +1,30 @@
+# Déploiement « en 1 clic » sur Render (https://render.com)
+# Ce fichier (Blueprint) crée automatiquement :
+#   - un service web Node.js pour l'application ;
+#   - une base de données PostgreSQL (données conservées durablement) ;
+#   - le lien entre les deux (variable DATABASE_URL).
+#
+# Voir DEPLOIEMENT.md pour le guide pas à pas.
+
+services:
+  - type: web
+    name: fruit-senegal
+    runtime: node
+    plan: free
+    region: frankfurt          # région la plus proche du Sénégal
+    branch: claude/mobile-shopping-payment-app-gew0f2
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/settings
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false            # À DÉFINIR vous-même dans le tableau de bord Render
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fruit-senegal-db
+          property: connectionString
+
+databases:
+  - name: fruit-senegal-db
+    plan: free
+    region: frankfurt
