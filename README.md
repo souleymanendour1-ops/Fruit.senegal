@@ -41,6 +41,27 @@ Les fois suivantes, il suffit de relancer `bash install.sh` (le mot de passe est
 > ℹ️ **Important** : lancez toujours les commandes **dans le dossier `fruit.senegal`**
 > (et non dans `~/downloads`). Vérifiez avec `ls package.json` : le fichier doit s'afficher.
 
+## 🌍 Créer un lien public temporaire (partager aux clients)
+
+Pour que vos clients accèdent à la boutique **depuis leur propre téléphone**, il
+faut un lien internet (et non `localhost`, qui ne marche que sur votre appareil).
+Le script `partager.sh` démarre l'app et ouvre un tunnel **Cloudflare** gratuit
+(sans compte) qui donne une adresse `https://xxxx.trycloudflare.com` :
+
+```bash
+cd fruit.senegal
+bash partager.sh
+```
+
+- Le lien affiché (`https://xxxx.trycloudflare.com`) = **la boutique** à partager.
+- Ajoutez `/admin.html` à ce lien pour **votre espace administrateur**.
+- Vos données restent sur votre téléphone (base conservée).
+
+> ⚠️ Le lien ne fonctionne **que tant que le script tourne** et que le téléphone
+> est allumé. Chaque lancement crée une **nouvelle adresse**. Pour un service
+> toujours en ligne avec une adresse fixe, passez à un hébergement cloud
+> (voir la section « Évolutions possibles »).
+
 ## 🚀 Démarrage manuel
 
 ```bash
