@@ -61,15 +61,20 @@ if ! command -v cloudflared >/dev/null 2>&1; then
 fi
 
 # --- Démarrage du serveur en arrière-plan -----------------------------------
-yellow "Démarrage du serveur (port $PORT)…"
-ADMIN_PASSWORD="$ADMIN_PASSWORD" PORT="$PORT" npm start > .server.log 2>&1 &
-SERVER_PID=$!
+SERVER_PID=""
+if curl -s -o /dev/null "http://localhost:$PORT/"; then
+  green "Un serveur répond déjà sur le port $PORT — on le réutilise."
+else
+  yellow "Démarrage du serveur (port $PORT)…"
+  ADMIN_PASSWORD="$ADMIN_PASSWORD" PORT="$PORT" npm start > .server.log 2>&1 &
+  SERVER_PID=$!
+fi
 
-# Arrête proprement le serveur quand on ferme le script (Ctrl + C)
+# Arrête proprement le serveur (seulement si c'est nous qui l'avons lancé) à la fermeture
 cleanup() {
   green ""
-  yellow "Arrêt du serveur et du tunnel…"
-  kill "$SERVER_PID" 2>/dev/null || true
+  yellow "Arrêt du tunnel…"
+  [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
   exit 0
 }
 trap cleanup INT TERM
