@@ -100,7 +100,9 @@ npm start
 
 ## 🛠️ Technologie
 
-- **Backend** : Node.js + Express, stockage fichier JSON (aucune dépendance native, déploiement simple).
+- **Backend** : Node.js + Express. Stockage **à double mode** : fichier JSON en local
+  (zéro configuration) et **PostgreSQL** en ligne dès que `DATABASE_URL` est défini
+  (données conservées durablement). Voir [`DEPLOIEMENT.md`](DEPLOIEMENT.md).
 - **Frontend** : PWA en JavaScript (sans étape de build), installable sur mobile, fonctionnement hors-ligne basique via service worker.
 - Mots de passe hachés (scrypt), sessions par jeton.
 
@@ -126,7 +128,8 @@ public/
 
 - L'accès aux sites partenaires se fait par **redirection** : ces plateformes n'autorisent pas l'intégration directe de leur catalogue de commande. Le modèle est donc un **service d'achat-intermédiaire** (concierge) + catalogue géré manuellement.
 - Le paiement est **validé manuellement** (le client envoie la référence Wave / OM). Une intégration directe des **API marchandes Wave / Orange Money** pourra être ajoutée ultérieurement (nécessite un compte marchand et des clés API).
-- Pour une montée en charge, remplacer le stockage JSON par **PostgreSQL**.
+- Pour une mise en ligne permanente (adresse fixe, base persistante), suivez
+  [`DEPLOIEMENT.md`](DEPLOIEMENT.md) (Render + PostgreSQL, offre gratuite).
 - Empaquetage en application native (Google Play / App Store) possible plus tard via Capacitor / TWA.
 
 ## ⚖️ Avertissement

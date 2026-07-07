@@ -177,7 +177,7 @@ app.put('/api/auth/me', requireUser, (req, res) => {
 // ---------------------------------------------------------------------------
 // Commandes (client)
 // ---------------------------------------------------------------------------
-app.post('/api/orders', requireUser, (req, res) => {
+app.post('/api/orders', requireUser, async (req, res) => {
   const { items, paymentMethod, paymentRef, deliveryAddress, deliveryCity, phone, note } = req.body || {};
   const normItems = normalizeItems(items);
   if (normItems.length === 0) {
@@ -217,7 +217,7 @@ app.post('/api/orders', requireUser, (req, res) => {
     updatedAt: Date.now()
   };
   db.get().orders.push(order);
-  db.saveNow();
+  await db.saveNow();
   res.json({ order });
 });
 
@@ -273,7 +273,7 @@ app.get('/api/admin/stats', requireAdmin, (_req, res) => {
 });
 
 // Mise à jour d'une commande : statut, date de livraison, prix ajusté, note admin.
-app.patch('/api/admin/orders/:id', requireAdmin, (req, res) => {
+app.patch('/api/admin/orders/:id', requireAdmin, async (req, res) => {
   const order = db.get().orders.find(o => o.id === Number(req.params.id));
   if (!order) return res.status(404).json({ error: 'Commande introuvable.' });
   const { status, deliveryDate, adminNote, items, serviceFeePercent } = req.body || {};
@@ -302,12 +302,12 @@ app.patch('/api/admin/orders/:id', requireAdmin, (req, res) => {
   order.serviceFee = totals.serviceFee;
   order.total = totals.total;
   order.updatedAt = Date.now();
-  db.saveNow();
+  await db.saveNow();
   res.json({ order });
 });
 
 // Catalogue (admin)
-app.post('/api/admin/products', requireAdmin, (req, res) => {
+app.post('/api/admin/products', requireAdmin, async (req, res) => {
   const { title, price, store, imageUrl, url, description, options } = req.body || {};
   if (!title || price == null) return res.status(400).json({ error: 'Titre et prix requis.' });
   const product = {
@@ -323,11 +323,11 @@ app.post('/api/admin/products', requireAdmin, (req, res) => {
     createdAt: Date.now()
   };
   db.get().products.push(product);
-  db.saveNow();
+  await db.saveNow();
   res.json({ product });
 });
 
-app.put('/api/admin/products/:id', requireAdmin, (req, res) => {
+app.put('/api/admin/products/:id', requireAdmin, async (req, res) => {
   const p = db.get().products.find(pr => pr.id === Number(req.params.id));
   if (!p) return res.status(404).json({ error: 'Produit introuvable.' });
   const f = req.body || {};
@@ -339,28 +339,28 @@ app.put('/api/admin/products/:id', requireAdmin, (req, res) => {
   if (f.description !== undefined) p.description = String(f.description).trim();
   if (f.options !== undefined) p.options = String(f.options).trim();
   if (f.active !== undefined) p.active = !!f.active;
-  db.saveNow();
+  await db.saveNow();
   res.json({ product: p });
 });
 
-app.delete('/api/admin/products/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/products/:id', requireAdmin, async (req, res) => {
   const idx = db.get().products.findIndex(pr => pr.id === Number(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'Produit introuvable.' });
   db.get().products.splice(idx, 1);
-  db.saveNow();
+  await db.saveNow();
   res.json({ ok: true });
 });
 
 // Paramètres (admin) : numéros Wave/OM, marge, etc.
 app.get('/api/admin/settings', requireAdmin, (_req, res) => res.json(db.get().settings));
-app.put('/api/admin/settings', requireAdmin, (req, res) => {
+app.put('/api/admin/settings', requireAdmin, async (req, res) => {
   const s = db.get().settings;
   const f = req.body || {};
   for (const key of ['businessName', 'waveNumber', 'orangeMoneyNumber', 'currency', 'deliveryNote']) {
     if (f[key] !== undefined) s[key] = String(f[key]).trim();
   }
   if (f.serviceFeePercent !== undefined) s.serviceFeePercent = Math.max(0, Number(f.serviceFeePercent) || 0);
-  db.saveNow();
+  await db.saveNow();
   res.json(s);
 });
 
@@ -377,8 +377,20 @@ app.get('*', (req, res, next) => {
 
 app.use((req, res) => res.status(404).json({ error: 'Route inconnue.' }));
 
-app.listen(PORT, () => {
+await db.init();
+
+const server = app.listen(PORT, () => {
   console.log(`\n  ${db.get().settings.businessName} — serveur démarré`);
   console.log(`  Boutique : http://localhost:${PORT}/`);
   console.log(`  Admin    : http://localhost:${PORT}/admin.html  (mot de passe: ${ADMIN_PASSWORD})\n`);
 });
+
+// Arrêt propre : on enregistre les dernières données avant de quitter.
+for (const sig of ['SIGTERM', 'SIGINT']) {
+  process.on(sig, async () => {
+    console.log(`\n${sig} reçu — sauvegarde et arrêt…`);
+    try { await db.saveNow(); await db.close(); } catch { /* ignore */ }
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 3000).unref();
+  });
+}
